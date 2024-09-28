@@ -4,7 +4,7 @@
  * Configuration and Global Variables
  */
 
-const DEBUG = true; // Set to true to enable debug logging
+const DEBUG = false; // Set to true to enable debug logging
 
 // Game Settings
 const GAME_SETTINGS = {

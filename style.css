@@ -1,0 +1,196 @@
+/* style.css */
+
+/* General Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #1e1e1e;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow: hidden;
+}
+
+#gameContainer {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#gameCanvas, #swipeTrailCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; /* Ensure canvases take full width */
+  height: 100%; /* Ensure canvases take full height */
+}
+
+#gameCanvas {
+  background: linear-gradient(to bottom, #1e1e1e, #2c3e50); /* Gradient background */
+}
+
+#swipeTrailCanvas {
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* UI Elements Containers */
+.ui-row {
+  position: absolute;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Vertically center items */
+  padding: 1vh 2vw; /* Responsive padding */
+  z-index: 2;
+}
+
+/* First Row: Sliced and Missed Counters */
+#firstRow {
+  top: 2vh;
+}
+
+#slicedCount, #missedCount {
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  font-family: 'Press Start 2P', cursive; /* Retro gaming font */
+  font-size: clamp(1rem, 2.5vw, 2rem); /* Responsive font size */
+}
+
+#slicedCount {
+  color: #f1c40f; /* Gold color for sliced */
+}
+
+#missedCount {
+  color: #e74c3c; /* Red color for missed */
+}
+
+/* Second Row: Combo Counter and Pause Button */
+#secondRow {
+  top: 6vh; /* Positioned below the first row */
+}
+
+#comboCount {
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  font-family: 'Press Start 2P', cursive; /* Retro gaming font */
+  font-size: clamp(1rem, 2.5vw, 2rem); /* Responsive font size */
+  color: #9b59b6; /* Purple color for combo */
+}
+
+#pauseButton {
+  background-color: rgba(231, 76, 60, 0.6); /* Semi-transparent red */
+  padding: 0.5vh 1vw; /* Responsive padding */
+  border: none;
+  border-radius: 0.5vh; /* Responsive border radius */
+  cursor: pointer;
+  opacity: 0.7; /* Less dominant */
+  transition: opacity 0.3s, transform 0.2s; /* Smooth transitions */
+  color: #fff;
+  font-family: 'Press Start 2P', cursive;
+  font-size: clamp(0.8rem, 1.5vw, 1.2rem); /* Responsive font size */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: clamp(2rem, 3vw, 3rem); /* Ensure button has consistent height */
+}
+
+#pauseButton:hover {
+  background-color: rgba(192, 57, 43, 0.8);
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+#pauseButton:active {
+  transform: scale(0.95);
+}
+
+/* Leaderboard positioned at the bottom center */
+#leaderboard {
+  position: absolute;
+  bottom: 2vh;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(44, 62, 80, 0.8); /* Semi-transparent dark blue */
+  padding: 0.5vh 1vw; /* Responsive padding */
+  border-radius: 0.5vh; /* Responsive border radius */
+  font-size: clamp(0.8rem, 1.5vw, 1.2rem); /* Responsive font size */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  white-space: nowrap; /* Prevent line breaks */
+  font-family: 'Press Start 2P', cursive; /* Retro gaming font */
+}
+
+/* Screens */
+#startScreen, #instructionScreen, #gameOverScreen, #pauseScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(30, 30, 30, 0.95); /* Slightly transparent dark background */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 3;
+  padding: 2vh 2vw;
+  text-align: center;
+}
+
+#startScreen.hidden,
+#instructionScreen.hidden,
+#gameOverScreen.hidden,
+#pauseScreen.hidden {
+  display: none;
+}
+
+.screen-title {
+  font-size: clamp(2rem, 5vw, 4rem);
+  margin-bottom: 1.5vh;
+  color: #1abc9c;
+  font-family: 'Press Start 2P', cursive;
+}
+
+#startScreen .screen-title {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); color: #1abc9c; }
+  50% { transform: scale(1.05); color: #16a085; }
+  100% { transform: scale(1); color: #1abc9c; }
+}
+
+.screen-subtitle {
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+  margin-bottom: 1vh;
+  color: #ecf0f1;
+  font-family: 'Press Start 2P', cursive;
+}
+
+.screen-button {
+  padding: 1vh 2vw;
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+  background-color: #3498db;
+  border: none;
+  border-radius: 1vh;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  margin: 1vh;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  font-family: 'Press Start 2P', cursive;
+}
+
+.screen-button:hover {
+  background-color: #2980b9;
+  transform: scale(1.05);
+}
+
+.screen-button:active {
+  transform: scale(0.95);
+}

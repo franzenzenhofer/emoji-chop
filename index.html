@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Franz-tastic Emoji Chop - Slice your way through a frenzy of emojis in this exciting, fast-paced game. Created by Franz Enzenhofer.">
+  <meta name="author" content="Franz Enzenhofer">
+  <meta name="keywords" content="Franz, Emoji, Game, Slicing, Fun, Ninja, Arcade">
+  <meta property="og:title" content="Franz-tastic Emoji Chop - Created by Franz Enzenhofer">
+  <meta property="og:description" content="Join Franz in this emoji slicing adventure. Play now and chop your way to the top!">
+  <meta property="og:image" content="https://emoji-chop.franzai.com/game.png"> <!-- Path to your game image -->
+  <meta property="og:type" content="website">
+  <title>Franz-tastic Emoji Chop - Created by Franz Enzenhofer</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Retro Gaming Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="gameContainer">
+    <!-- Game Canvases -->
+    <canvas id="gameCanvas"></canvas>
+    <canvas id="swipeTrailCanvas"></canvas>
+
+    <!-- UI Elements -->
+    <div id="firstRow" class="ui-row">
+      <div id="slicedCount">Sliced: 0</div>
+      <div id="missedCount">Missed: 0</div>
+    </div>
+    <div id="secondRow" class="ui-row">
+      <div id="comboCount">Combo: x0</div>
+      <button class="screen-button" id="pauseButton">Pause</button>
+    </div>
+    <div id="leaderboard">Top Score: 0 Slices - 0 Missed</div>
+
+    <!-- Start Screen -->
+    <div id="startScreen">
+      <div class="screen-title">Emoji Ninja</div>
+      <button class="screen-button" id="startButton">Start Game</button>
+      <button class="screen-button" id="instructionsButton">Instructions</button>
+    </div>
+
+    <!-- Instructions Screen -->
+    <div id="instructionScreen" class="hidden">
+      <div class="screen-title">How to Play</div>
+      <div class="screen-subtitle">Swipe across the screen to slice emojis!</div>
+      <div class="screen-subtitle">Avoid letting emojis fall off the screen.</div>
+      <button class="screen-button" id="backButton">Back</button>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOverScreen" class="hidden">
+      <div class="screen-title">Game Over</div>
+      <div id="finalScore">Your Score: 0</div>
+      <button class="screen-button" id="restartButton">Restart Game</button>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pauseScreen" class="hidden">
+      <div class="screen-title">Game Paused</div>
+      <button class="screen-button" id="resumeButton">Resume Game</button>
+    </div>
+
+  </div>
+
+  <!-- Include JavaScript Files with defer and corrected order -->
+  <script src="config.js" defer></script> <!-- Load config.js first -->
+  <script src="util.js" defer></script> <!-- Then util.js -->
+  <script src="emoji.js" defer></script>
+  <script src="input.js" defer></script>
+  <script src="music.js" defer></script>
+  <script src="game.js" defer></script>
+</body>
+</html>

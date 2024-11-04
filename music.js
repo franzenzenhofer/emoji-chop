@@ -4,12 +4,6 @@
  * Music Management using Web Audio API
  */
 
-/**
- * Notes:
- * - We're using modern sound design techniques to create a richer, more pleasing sound.
- * - The melody remains "Ode to Joy" as per your request.
- */
-
 // AudioContext and State Variables
 let audioContext;
 let isAudioInitialized = false;
@@ -34,7 +28,7 @@ const ODE_TO_JOY_MELODY = [
   // Continue melody as desired
 ];
 
-// Convert note names to frequencies (C4 to C5)
+// Convert note names to frequencies
 const NOTE_FREQUENCIES = {
   'C4': 261.63,
   'D4': 293.66,
@@ -45,7 +39,6 @@ const NOTE_FREQUENCIES = {
   'B4': 493.88,
   'C5': 523.25,
   // Add more notes if needed
-  'G3': 196.00,
 };
 
 // Melody Player State
@@ -57,119 +50,45 @@ let melodyIndex = 0;
 function initAudio() {
   if (audioContext) return;
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  debug('AudioContext initialized');
   isAudioInitialized = true;
 }
 
 /**
- * Plays a single note with enhanced sound.
+ * Plays a single note with a simple and beautiful sound.
  * @param {string} note - The note name (e.g., 'C4')
  * @param {number} duration - Duration in milliseconds
  */
-function playNote(note, duration) {
+function playNoteSimple(note, duration) {
   if (!isAudioInitialized) {
-    debug('AudioContext not initialized. Note cannot be played.');
     return;
   }
 
   const frequency = NOTE_FREQUENCIES[note];
   if (!frequency) {
-    debug(`Frequency for note ${note} not defined.`);
     return;
   }
 
-  const startTime = audioContext.currentTime;
-  const endTime = startTime + duration / 1000;
+  const oscillator = audioContext.createOscillator();
+  oscillator.type = 'sine'; // Simple sine wave for a pure tone
 
-  // Master Gain Node
-  const masterGain = audioContext.createGain();
-  masterGain.gain.setValueAtTime(0, startTime);
+  const gainNode = audioContext.createGain();
 
-  // ADSR Envelope for Gain
-  const attackTime = 0.02;
-  const decayTime = 0.1;
-  const sustainLevel = 0.7;
-  const releaseTime = 0.3;
+  oscillator.frequency.value = frequency;
 
-  masterGain.gain.linearRampToValueAtTime(1.0, startTime + attackTime); // Attack
-  masterGain.gain.linearRampToValueAtTime(sustainLevel, startTime + attackTime + decayTime); // Decay
-  masterGain.gain.setValueAtTime(sustainLevel, endTime - releaseTime); // Sustain
-  masterGain.gain.linearRampToValueAtTime(0.0, endTime); // Release
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
 
-  // Create a low-pass filter to soften the sound
-  const filter = audioContext.createBiquadFilter();
-  filter.type = 'lowpass';
-  filter.frequency.setValueAtTime(1500, startTime);
+  const currentTime = audioContext.currentTime;
 
-  // Filter Envelope
-  filter.frequency.linearRampToValueAtTime(2000, startTime + attackTime); // Attack
-  filter.frequency.linearRampToValueAtTime(1000, endTime); // Decay/Release
+  // Simple ADSR envelope
+  gainNode.gain.setValueAtTime(0, currentTime);
+  gainNode.gain.linearRampToValueAtTime(0.8, currentTime + 0.05); // Attack
+  gainNode.gain.linearRampToValueAtTime(0.6, currentTime + 0.1); // Decay
+  gainNode.gain.setValueAtTime(0.6, currentTime + (duration / 1000) - 0.1); // Sustain
+  gainNode.gain.linearRampToValueAtTime(0, currentTime + (duration / 1000)); // Release
 
-  // Create multiple oscillators for richer sound
-  const oscillators = [];
-
-  // Base oscillator
-  const osc1 = audioContext.createOscillator();
-  osc1.type = 'sawtooth';
-  osc1.frequency.setValueAtTime(frequency, startTime);
-  osc1.detune.setValueAtTime(-5, startTime);
-  osc1.connect(filter);
-  oscillators.push(osc1);
-
-  // Slightly detuned oscillator for chorus effect
-  const osc2 = audioContext.createOscillator();
-  osc2.type = 'sawtooth';
-  osc2.frequency.setValueAtTime(frequency, startTime);
-  osc2.detune.setValueAtTime(5, startTime);
-  osc2.connect(filter);
-  oscillators.push(osc2);
-
-  // Sub oscillator an octave lower
-  const osc3 = audioContext.createOscillator();
-  osc3.type = 'triangle';
-  osc3.frequency.setValueAtTime(frequency / 2, startTime);
-  osc3.connect(filter);
-  oscillators.push(osc3);
-
-  // Connect filter to master gain
-  filter.connect(masterGain);
-
-  // Reverb (Convolver Node)
-  const convolver = audioContext.createConvolver();
-  convolver.buffer = createReverbBuffer(audioContext);
-  masterGain.connect(convolver);
-  convolver.connect(audioContext.destination);
-
-  // Also connect master gain directly to destination for dry signal
-  masterGain.connect(audioContext.destination);
-
-  // Start and stop oscillators
-  oscillators.forEach(osc => {
-    osc.start(startTime);
-    osc.stop(endTime + releaseTime);
-  });
-
-  // Stop master gain after release
-  masterGain.gain.setValueAtTime(0.0, endTime + releaseTime + 0.1);
-}
-
-/**
- * Creates a simple reverb buffer.
- * @param {AudioContext} context - The audio context
- * @returns {AudioBuffer} The reverb buffer
- */
-function createReverbBuffer(context) {
-  const sampleRate = context.sampleRate;
-  const length = sampleRate * 2; // 2 seconds
-  const impulse = context.createBuffer(2, length, sampleRate);
-  for (let i = 0; i < impulse.numberOfChannels; i++) {
-    const channelData = impulse.getChannelData(i);
-    for (let j = 0; j < length; j++) {
-      // Exponential decay
-      channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 2);
-    }
-  }
-  return impulse;
+  oscillator.start(currentTime);
+  oscillator.stop(currentTime + (duration / 1000) + 0.1);
 }
 
 /**
@@ -178,19 +97,17 @@ function createReverbBuffer(context) {
  */
 function playNextMelodyNote() {
   if (!isAudioInitialized) {
-    debug('AudioContext not initialized. Cannot play melody.');
     return;
   }
 
   // Get the current note
   const currentNote = ODE_TO_JOY_MELODY[melodyIndex];
   if (!currentNote) {
-    debug('Melody index out of range. Resetting melody.');
     resetMelody();
     return;
   }
 
-  playNote(currentNote.note, currentNote.duration);
+  playNoteSimple(currentNote.note, currentNote.duration);
 
   // Increment melody index
   melodyIndex++;
@@ -203,23 +120,16 @@ function playNextMelodyNote() {
 
 /**
  * Resets the melody to the start.
- * This function should be called when the player misses an emoji or the melody completes.
  */
 function resetMelody() {
   melodyIndex = 0;
-  debug('Melody reset to start.');
 }
 
 /**
  * Plays a sound effect when an emoji is sliced.
  */
 function playSliceSound() {
-  if (!isAudioInitialized) {
-    debug('AudioContext not initialized. Slice sound cannot be played.');
-    return;
-  }
-
-  // Play the next melody note
+  // Play the next note in the melody
   playNextMelodyNote();
 }
 
@@ -253,13 +163,4 @@ window.addEventListener('DOMContentLoaded', setupUserInteraction);
 // Expose necessary functions to the global scope
 window.playNextMelodyNote = playNextMelodyNote;
 window.resetMelody = resetMelody;
-window.playSliceSound = playSliceSound; // Expose playSliceSound
-
-/**
- * Utility function for debugging (assumes DEBUG is defined globally)
- */
-function debug(...args) {
-  if (typeof DEBUG !== 'undefined' && DEBUG) {
-    console.log('[DEBUG - music.js]:', ...args);
-  }
-}
+window.playSliceSound = playSliceSound;

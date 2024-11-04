@@ -4,8 +4,11 @@
  * User Input Handling
  */
 
+// Detect if the device is touch capable
+const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
 // Swipe Variables
-let isSwiping = false;
+let isSwiping = !isTouchDevice;
 
 /**
  * Starts tracking a swipe
@@ -16,7 +19,6 @@ function startSwipe(x, y) {
   if (!gameState.gameRunning) return; // Only allow swiping when the game is running
   isSwiping = true;
   gameState.swipePath = [{ x, y, timestamp: Date.now() }];
-  debug('Swipe started at', x, y);
 }
 
 /**
@@ -30,7 +32,6 @@ function moveSwipe(x, y) {
   // Limit swipe path points to those within the last 250ms
   const cutoffTime = Date.now() - 250;
   gameState.swipePath = gameState.swipePath.filter(point => point.timestamp >= cutoffTime);
-  debug('Swipe moved to', x, y);
 }
 
 /**
@@ -39,40 +40,29 @@ function moveSwipe(x, y) {
 function endSwipe() {
   if (!gameState.gameRunning) return;
   isSwiping = false;
-  // Optionally, keep the swipePath for fading
-  debug('Swipe ended');
 }
 
-// Touch Events
-UI_ELEMENTS.gameCanvas.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  const touch = e.touches[0];
-  startSwipe(touch.clientX, touch.clientY);
-});
+if (isTouchDevice) {
+  // Touch Events
+  UI_ELEMENTS.gameCanvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    startSwipe(touch.clientX, touch.clientY);
+  });
 
-UI_ELEMENTS.gameCanvas.addEventListener('touchmove', (e) => {
-  e.preventDefault();
-  const touch = e.touches[0];
-  moveSwipe(touch.clientX, touch.clientY);
-});
+  UI_ELEMENTS.gameCanvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    moveSwipe(touch.clientX, touch.clientY);
+  });
 
-UI_ELEMENTS.gameCanvas.addEventListener('touchend', (e) => {
-  e.preventDefault();
-  endSwipe();
-});
-
-// Mouse Events
-UI_ELEMENTS.gameCanvas.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  startSwipe(e.clientX, e.clientY);
-});
-
-UI_ELEMENTS.gameCanvas.addEventListener('mousemove', (e) => {
-  if (!isSwiping) return;
-  moveSwipe(e.clientX, e.clientY);
-});
-
-UI_ELEMENTS.gameCanvas.addEventListener('mouseup', (e) => {
-  e.preventDefault();
-  endSwipe();
-});
+  UI_ELEMENTS.gameCanvas.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    endSwipe();
+  });
+} else {
+  // Desktop devices - always-on swiping
+  UI_ELEMENTS.gameCanvas.addEventListener('mousemove', (e) => {
+    moveSwipe(e.clientX, e.clientY);
+  });
+}

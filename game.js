@@ -15,7 +15,6 @@ function updateAndDrawSparkles() {
   }
 }
 
-
 /**
  * Main Game Logic
  */
@@ -117,7 +116,6 @@ function initGame() {
   gameState.swipePath = [];
 
   gameState.lastEmojiTime = Date.now() - gameState.spawnRate;
-
 
   // Start game loop
   gameLoop();
@@ -300,7 +298,6 @@ function updateAndDrawEmojis() {
   }
 }
 
-
 /**
  * Updates and draws all sliced emojis
  */
@@ -398,7 +395,7 @@ function checkCollisions() {
         const intersection = getLineCircleIntersectionPoint(x1, y1, x2, y2, emoji.x, emoji.y, emoji.radius);
         if (intersection) {
           emoji.sliced = true;
-          handleSlicedEmoji(emoji, intersection);
+          handleSlicedEmoji(emoji, intersection, x1, y1, x2, y2);
           gameState.emojis.splice(j, 1);
         }
       }
@@ -410,34 +407,19 @@ function checkCollisions() {
  * Handles the slicing of an emoji
  * @param {Emoji} emoji - The sliced emoji
  * @param {object} intersection - Intersection point {x, y}
+ * @param {number} x1 - Line start x
+ * @param {number} y1 - Line start y
+ * @param {number} x2 - Line end x
+ * @param {number} y2 - Line end y
  */
-function handleSlicedEmoji(emoji, intersection) {
-  // Determine the swipe direction at the intersection point
-  // Find the index in swipePath closest to the intersection point
-  let closestIndex = -1;
-  let minDistance = Infinity;
-  gameState.swipePath.forEach((point, index) => {
-    const distance = Math.hypot(point.x - intersection.x, point.y - intersection.y);
-    if (distance < minDistance) {
-      minDistance = distance;
-      closestIndex = index;
-    }
-  });
+function handleSlicedEmoji(emoji, intersection, x1, y1, x2, y2) {
+  // Calculate the angle of the swipe segment
+  const angle = Math.atan2(y2 - y1, x2 - x1);
 
-  // Ensure there's a next point to determine direction
-  let angle;
-  if (closestIndex < gameState.swipePath.length - 1) {
-    const nextPoint = gameState.swipePath[closestIndex + 1];
-    angle = Math.atan2(nextPoint.y - intersection.y, nextPoint.x - intersection.x);
-  } else if (closestIndex > 0) {
-    const prevPoint = gameState.swipePath[closestIndex - 1];
-    angle = Math.atan2(intersection.y - prevPoint.y, intersection.x - prevPoint.x);
-  } else {
-    // Default angle if direction cannot be determined
-    angle = Math.atan2(emoji.vy, emoji.vx);
-  }
+  // Create an object representing the slice line
+  const sliceLine = { x1, y1, x2, y2 };
 
-  handleSlicedEmojiWithAngle(emoji, intersection, angle);
+  handleSlicedEmojiWithAngle(emoji, intersection, angle, sliceLine);
 
   // Play the next note in the melody
   if (typeof playNextMelodyNote === 'function') {
@@ -445,8 +427,7 @@ function handleSlicedEmoji(emoji, intersection) {
   }
 }
 
-
-function handleSlicedEmojiWithAngle(emoji, intersection, angle) {
+function handleSlicedEmojiWithAngle(emoji, intersection, angle, sliceLine) {
   // Play slice sound using AudioContext
   if (typeof playSliceSound === 'function') {
     playSliceSound();
@@ -465,7 +446,7 @@ function handleSlicedEmojiWithAngle(emoji, intersection, angle) {
   UI_ELEMENTS.comboCount.textContent = `Combo: x${gameState.combo}`;
 
   // Create sliced emoji animation at emoji's current position
-  const slicedEmoji = new SlicedEmoji(emoji.x, emoji.y, emoji.emoji, angle, emoji.radius);
+  const slicedEmoji = new SlicedEmoji(emoji.x, emoji.y, emoji.emoji, angle, emoji.radius, sliceLine);
   gameState.slicedEmojis.push(slicedEmoji);
 
   // Create slice particles at emoji's position
@@ -483,7 +464,6 @@ function handleSlicedEmojiWithAngle(emoji, intersection, angle) {
     gameState.sparkles.push(sparkle);
   }
 }
-
 
 /**
  * Line-circle intersection detection
@@ -593,4 +573,13 @@ function hideScreen(screenId) {
 function hideAllScreens() {
   const screens = ['startScreen', 'instructionScreen', 'gameOverScreen', 'pauseScreen'];
   screens.forEach(screenId => hideScreen(screenId));
+}
+
+/**
+ * Utility function for debugging (assumes DEBUG is defined globally)
+ */
+function debug(...args) {
+  if (typeof DEBUG !== 'undefined' && DEBUG) {
+    console.log('[DEBUG - game.js]:', ...args);
+  }
 }

@@ -4,25 +4,34 @@
  * Music Management using Web Audio API
  */
 
+/**
+ * Notes:
+ * - We're using modern sound design techniques to create a richer, more pleasing sound.
+ * - The melody remains "Ode to Joy" as per your request.
+ */
+
 // AudioContext and State Variables
 let audioContext;
 let isAudioInitialized = false;
 
-// Define the melody for "When the Saints Go Marching In" (C Major)
-const SAINTS_MELODY = [
+// Define the melody for "Ode to Joy" (C Major)
+const ODE_TO_JOY_MELODY = [
   { note: 'E4', duration: 400 },
-  { note: 'G4', duration: 400 },
-  { note: 'A4', duration: 400 },
-  { note: 'G4', duration: 400 },
   { note: 'E4', duration: 400 },
+  { note: 'F4', duration: 400 },
+  { note: 'G4', duration: 400 },
+  { note: 'G4', duration: 400 },
+  { note: 'F4', duration: 400 },
+  { note: 'E4', duration: 400 },
+  { note: 'D4', duration: 400 },
+  { note: 'C4', duration: 400 },
+  { note: 'C4', duration: 400 },
+  { note: 'D4', duration: 400 },
+  { note: 'E4', duration: 400 },
+  { note: 'D4', duration: 400 },
+  { note: 'C4', duration: 400 },
   { note: 'C4', duration: 800 },
-  { note: 'E4', duration: 400 },
-  { note: 'G4', duration: 400 },
-  { note: 'A4', duration: 400 },
-  { note: 'G4', duration: 400 },
-  { note: 'E4', duration: 400 },
-  { note: 'C4', duration: 800 },
-  // Repeat or extend the melody as needed
+  // Continue melody as desired
 ];
 
 // Convert note names to frequencies (C4 to C5)
@@ -36,6 +45,7 @@ const NOTE_FREQUENCIES = {
   'B4': 493.88,
   'C5': 523.25,
   // Add more notes if needed
+  'G3': 196.00,
 };
 
 // Melody Player State
@@ -52,7 +62,7 @@ function initAudio() {
 }
 
 /**
- * Plays a single note.
+ * Plays a single note with enhanced sound.
  * @param {string} note - The note name (e.g., 'C4')
  * @param {number} duration - Duration in milliseconds
  */
@@ -68,26 +78,98 @@ function playNote(note, duration) {
     return;
   }
 
-  // Create oscillator for the note
-  const oscillator = audioContext.createOscillator();
-  oscillator.type = 'sine'; // Smooth tone
-  oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+  const startTime = audioContext.currentTime;
+  const endTime = startTime + duration / 1000;
 
-  // Create gain node for volume and envelope
-  const gainNode = audioContext.createGain();
-  gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+  // Master Gain Node
+  const masterGain = audioContext.createGain();
+  masterGain.gain.setValueAtTime(0, startTime);
 
-  // ADSR Envelope
-  gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.05); // Attack
-  gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration / 1000); // Decay
+  // ADSR Envelope for Gain
+  const attackTime = 0.02;
+  const decayTime = 0.1;
+  const sustainLevel = 0.7;
+  const releaseTime = 0.3;
 
-  // Connect nodes
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
+  masterGain.gain.linearRampToValueAtTime(1.0, startTime + attackTime); // Attack
+  masterGain.gain.linearRampToValueAtTime(sustainLevel, startTime + attackTime + decayTime); // Decay
+  masterGain.gain.setValueAtTime(sustainLevel, endTime - releaseTime); // Sustain
+  masterGain.gain.linearRampToValueAtTime(0.0, endTime); // Release
 
-  // Start and stop oscillator
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + duration / 1000 + 0.1);
+  // Create a low-pass filter to soften the sound
+  const filter = audioContext.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(1500, startTime);
+
+  // Filter Envelope
+  filter.frequency.linearRampToValueAtTime(2000, startTime + attackTime); // Attack
+  filter.frequency.linearRampToValueAtTime(1000, endTime); // Decay/Release
+
+  // Create multiple oscillators for richer sound
+  const oscillators = [];
+
+  // Base oscillator
+  const osc1 = audioContext.createOscillator();
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(frequency, startTime);
+  osc1.detune.setValueAtTime(-5, startTime);
+  osc1.connect(filter);
+  oscillators.push(osc1);
+
+  // Slightly detuned oscillator for chorus effect
+  const osc2 = audioContext.createOscillator();
+  osc2.type = 'sawtooth';
+  osc2.frequency.setValueAtTime(frequency, startTime);
+  osc2.detune.setValueAtTime(5, startTime);
+  osc2.connect(filter);
+  oscillators.push(osc2);
+
+  // Sub oscillator an octave lower
+  const osc3 = audioContext.createOscillator();
+  osc3.type = 'triangle';
+  osc3.frequency.setValueAtTime(frequency / 2, startTime);
+  osc3.connect(filter);
+  oscillators.push(osc3);
+
+  // Connect filter to master gain
+  filter.connect(masterGain);
+
+  // Reverb (Convolver Node)
+  const convolver = audioContext.createConvolver();
+  convolver.buffer = createReverbBuffer(audioContext);
+  masterGain.connect(convolver);
+  convolver.connect(audioContext.destination);
+
+  // Also connect master gain directly to destination for dry signal
+  masterGain.connect(audioContext.destination);
+
+  // Start and stop oscillators
+  oscillators.forEach(osc => {
+    osc.start(startTime);
+    osc.stop(endTime + releaseTime);
+  });
+
+  // Stop master gain after release
+  masterGain.gain.setValueAtTime(0.0, endTime + releaseTime + 0.1);
+}
+
+/**
+ * Creates a simple reverb buffer.
+ * @param {AudioContext} context - The audio context
+ * @returns {AudioBuffer} The reverb buffer
+ */
+function createReverbBuffer(context) {
+  const sampleRate = context.sampleRate;
+  const length = sampleRate * 2; // 2 seconds
+  const impulse = context.createBuffer(2, length, sampleRate);
+  for (let i = 0; i < impulse.numberOfChannels; i++) {
+    const channelData = impulse.getChannelData(i);
+    for (let j = 0; j < length; j++) {
+      // Exponential decay
+      channelData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 2);
+    }
+  }
+  return impulse;
 }
 
 /**
@@ -101,7 +183,7 @@ function playNextMelodyNote() {
   }
 
   // Get the current note
-  const currentNote = SAINTS_MELODY[melodyIndex];
+  const currentNote = ODE_TO_JOY_MELODY[melodyIndex];
   if (!currentNote) {
     debug('Melody index out of range. Resetting melody.');
     resetMelody();
@@ -114,7 +196,7 @@ function playNextMelodyNote() {
   melodyIndex++;
 
   // If we've reached the end of the melody, reset
-  if (melodyIndex >= SAINTS_MELODY.length) {
+  if (melodyIndex >= ODE_TO_JOY_MELODY.length) {
     resetMelody();
   }
 }
@@ -126,6 +208,19 @@ function playNextMelodyNote() {
 function resetMelody() {
   melodyIndex = 0;
   debug('Melody reset to start.');
+}
+
+/**
+ * Plays a sound effect when an emoji is sliced.
+ */
+function playSliceSound() {
+  if (!isAudioInitialized) {
+    debug('AudioContext not initialized. Slice sound cannot be played.');
+    return;
+  }
+
+  // Play the next melody note
+  playNextMelodyNote();
 }
 
 /**
@@ -158,6 +253,7 @@ window.addEventListener('DOMContentLoaded', setupUserInteraction);
 // Expose necessary functions to the global scope
 window.playNextMelodyNote = playNextMelodyNote;
 window.resetMelody = resetMelody;
+window.playSliceSound = playSliceSound; // Expose playSliceSound
 
 /**
  * Utility function for debugging (assumes DEBUG is defined globally)

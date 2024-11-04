@@ -65,6 +65,7 @@ class Emoji {
     return this.y - this.radius > UI_ELEMENTS.gameCanvas.height;
   }
 }
+
 class SlicedEmojiFragment {
   /**
    * Creates an instance of SlicedEmojiFragment.
@@ -74,14 +75,16 @@ class SlicedEmojiFragment {
    * @param {number} sliceAngle - Angle of the slice in radians
    * @param {number} radius - Radius of the fragment
    * @param {string} side - 'left' or 'right', indicating which side of the slice
+   * @param {object} sliceLine - Object with point1 and point2 {x1, y1, x2, y2}
    */
-  constructor(x, y, emoji, sliceAngle, radius, side) {
+  constructor(x, y, emoji, sliceAngle, radius, side, sliceLine) {
     this.x = x;
     this.y = y;
     this.emoji = emoji;
     this.sliceAngle = sliceAngle;
     this.radius = radius; // Set the radius
     this.side = side;
+    this.sliceLine = sliceLine; // Store the slice line
 
     // Calculate velocities based on slice angle
     const speed = GAME_SETTINGS.currentSpeed;
@@ -131,15 +134,24 @@ class SlicedEmojiFragment {
     // Rotate the context so that the slice line is vertical
     context.rotate(this.sliceAngle);
 
-    // Define the clipping path
+    // Define the clipping path based on the slice line
     context.beginPath();
+
+    const halfWidth = this.radius * 2;
+    const halfHeight = this.radius * 2;
 
     if (this.side === 'left') {
       // Left side of the slice line
-      context.rect(-this.radius * 2, -this.radius * 2, this.radius * 2, this.radius * 4);
+      context.moveTo(-halfWidth, -halfHeight);
+      context.lineTo(0, -halfHeight);
+      context.lineTo(0, halfHeight);
+      context.lineTo(-halfWidth, halfHeight);
     } else {
       // Right side of the slice line
-      context.rect(0, -this.radius * 2, this.radius * 2, this.radius * 4);
+      context.moveTo(0, -halfHeight);
+      context.lineTo(halfWidth, -halfHeight);
+      context.lineTo(halfWidth, halfHeight);
+      context.lineTo(0, halfHeight);
     }
 
     context.closePath();
@@ -172,24 +184,26 @@ class SlicedEmojiFragment {
 class SlicedEmoji {
   /**
    * Creates an instance of SlicedEmoji.
-   * @param {number} x - X position (intersection point)
-   * @param {number} y - Y position (intersection point)
+   * @param {number} x - X position (emoji's center)
+   * @param {number} y - Y position (emoji's center)
    * @param {string} emoji - Emoji character
    * @param {number} sliceAngle - Angle of the slice in radians
    * @param {number} radius - Radius of the sliced emoji
+   * @param {object} sliceLine - Object with point1 and point2 {x1, y1, x2, y2}
    */
-  constructor(x, y, emoji, sliceAngle, radius) {
+  constructor(x, y, emoji, sliceAngle, radius, sliceLine) {
     this.x = x;
     this.y = y;
     this.emoji = emoji;
     this.sliceAngle = sliceAngle;
     this.radius = radius;
+    this.sliceLine = sliceLine;
 
     this.fragments = [];
 
     // Create two fragments: 'left' and 'right' of the slice
-    const leftFragment = new SlicedEmojiFragment(this.x, this.y, this.emoji, sliceAngle, this.radius, 'left');
-    const rightFragment = new SlicedEmojiFragment(this.x, this.y, this.emoji, sliceAngle, this.radius, 'right');
+    const leftFragment = new SlicedEmojiFragment(this.x, this.y, this.emoji, sliceAngle, this.radius, 'left', sliceLine);
+    const rightFragment = new SlicedEmojiFragment(this.x, this.y, this.emoji, sliceAngle, this.radius, 'right', sliceLine);
 
     this.fragments.push(leftFragment);
     this.fragments.push(rightFragment);
